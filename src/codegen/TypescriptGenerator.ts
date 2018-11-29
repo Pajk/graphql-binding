@@ -119,12 +119,12 @@ export type ${type.name}_Output = string`
     },
 
     GraphQLEnumType: (type: GraphQLEnumType): string => {
-      return `${this.renderDescription(type.description)}export type ${
+      return `${this.renderDescription(type.description)}export enum ${
         type.name
-      } = ${type
+      } {\n${type
         .getValues()
-        .map(e => `  '${e.name}'`)
-        .join(' |\n')}`
+        .map(e => `  ${e.name} = '${e.value}',`)
+        .join('\n')}\n}`
     },
   }
   constructor({
@@ -382,7 +382,7 @@ ${description.split('\n').map(l => ` * ${l}\n`)}
   }
   renderImports() {
     return `\
-import { makeBindingClass, Options } from 'graphql-binding'
+import { makeBindingClass, Options } from '@pjk/graphql-binding'
 import { GraphQLResolveInfo, GraphQLSchema } from 'graphql'
 import { IResolvers } from 'graphql-tools/dist/Interfaces'
 import ${
