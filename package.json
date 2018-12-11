@@ -7,7 +7,8 @@
   "contributors": [
     "Kim Brandwijk <kim.brandwijk@gmail.com>",
     "Tim Suchanek <suchanek@prisma.io>",
-    "Marcin Pacholec <marcin11235@gmail.com>"
+    "Marcin Pacholec <marcin11235@gmail.com>",
+    "Matic Zavadlal <matic.zavadlal@gmail.com>"
   ],
   "bin": {
     "graphql-binding": "./dist/bin.js"
@@ -18,36 +19,17 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublish": "yarn build",
+    "prepublish": "npm-run-all build",
     "clean": "rimraf dist",
     "compile": "tsc -d",
-    "lint": "tslint --project tsconfig.json {src}/**/*.ts && prettier-check --ignore-path .gitignore src/**/*.ts",
     "build": "npm-run-all clean compile",
-    "pretest": "npm run build",
-    "test": "npm run lint && ava"
-  },
-  "devDependencies": {
-    "@types/graphql": "14.0.3",
-    "@types/mkdirp": "0.5.2",
-    "@types/node": "10.12.10",
-    "@types/yargs": "12.0.1",
-    "apollo-link": "1.2.4",
-    "ava": "1.0.0-rc.2",
-    "graphql": "14.0.2",
-    "graphql-tag": "2.10.0",
-    "husky": "1.2.0",
-    "npm-run-all": "4.1.5",
-    "prettier": "1.15.2",
-    "prettier-check": "2.0.0",
-    "pretty-quick": "1.8.0",
-    "rimraf": "2.6.2",
-    "semantic-release": "15.12.3",
-    "tslint": "5.11.0",
-    "tslint-config-prettier": "1.17.0",
-    "tslint-config-standard": "8.0.1",
-    "typescript": "3.1.6"
+    "pretest": "npm-run-all build",
+    "test-lint": "tslint --project tsconfig.json {src}/**/*.ts && prettier-check --ignore-path .gitignore src/**/*.ts",
+    "test-ava": "ava",
+    "test": "npm-run-all test-*"
   },
   "dependencies": {
+    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0",
     "graphql-import": "^0.7.1",
     "graphql-tools": "4.0.3",
     "iterall": "1.2.2",
@@ -56,7 +38,24 @@
     "ts-node": "^7.0.1",
     "yargs": "^12.0.2"
   },
-  "peerDependencies": {
-    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0"
+  "devDependencies": {
+    "@types/graphql": "14.0.3",
+    "@types/mkdirp": "0.5.2",
+    "@types/node": "10.12.12",
+    "@types/yargs": "12.0.1",
+    "apollo-link": "1.2.4",
+    "ava": "1.0.0-rc.2",
+    "graphql-tag": "2.10.0",
+    "husky": "1.2.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "1.15.3",
+    "prettier-check": "2.0.0",
+    "pretty-quick": "1.8.0",
+    "rimraf": "2.6.2",
+    "semantic-release": "15.12.4",
+    "tslint": "5.11.0",
+    "tslint-config-prettier": "1.17.0",
+    "tslint-config-standard": "8.0.1",
+    "typescript": "3.2.2"
   }
 }
