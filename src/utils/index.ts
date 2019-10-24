@@ -116,5 +116,5 @@ export function printDocumentFromInfo(info: GraphQLResolveInfo) {
     ],
   }
 
-  return print(doc)
+  return print(doc as any)
 }
