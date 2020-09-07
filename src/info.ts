@@ -30,7 +30,7 @@ export function buildInfo(
   if (!info) {
     info = buildInfoForAllScalars(rootFieldName, schema, operation)
   } else if ((info as any).kind && (info as any).kind === 'Document') {
-    info = print(info as any)
+    info = print(info as DocumentNode)
   }
   if (typeof info === 'string') {
     info = buildInfoFromFragment(rootFieldName, schema, operation, info)
@@ -51,8 +51,8 @@ export function buildInfoForAllScalars(
   if (isInterfaceType(namedType) || isObjectType(namedType)) {
     const fields = (namedType as any).getFields()
     selections = Object.keys(fields)
-      .filter(f => isScalar(fields[f].type))
-      .map<FieldNode>(fieldName => {
+      .filter((f) => isScalar(fields[f].type))
+      .map<FieldNode>((fieldName) => {
         const field = fields[fieldName]
         return {
           kind: 'Field',
@@ -138,7 +138,7 @@ function extractQuerySelectionSet(
   }
   const document = parse(query)
   const errors = validate(schema, document).filter(
-    e => e.message.match(/Fragment ".*" is never used./) === null,
+    (e) => e.message.match(/Fragment ".*" is never used./) === null,
   )
   if (errors.length > 0) {
     throw errors
@@ -203,7 +203,7 @@ export function makeSubInfo(
     parentType = currentType
     currentType = currentFieldType
     let suitableSelection = currentSelectionSet.selections!.find(
-      selection =>
+      (selection) =>
         selection.kind === 'Field' && selection.name.value === currentFieldName,
     )
 
