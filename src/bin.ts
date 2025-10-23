@@ -37,7 +37,7 @@ const argv = yargs
   })
   .demandOption(['i', 'l', 'b']).argv
 
-run(argv).catch(e => console.error(e))
+run(argv).catch((e) => console.error(e))
 
 async function run(argv) {
   const { input, language, outputBinding, outputTypedefs } = argv

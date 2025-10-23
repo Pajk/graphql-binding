@@ -7,12 +7,11 @@ import {
   buildSchema,
   GraphQLUnionType,
   GraphQLInterfaceType,
+  OperationTypeNode,
+  print,
 } from 'graphql'
-import {
-  delegateToSchema,
-  ReplaceFieldWithFragment,
-  IResolvers,
-} from 'graphql-tools-fork'
+import { delegateToSchema } from '@graphql-tools/delegate'
+import type { IResolvers } from '@graphql-tools/utils'
 import {
   BindingOptions,
   Options,
@@ -20,9 +19,10 @@ import {
   Operation,
   FragmentReplacement,
 } from './types'
-import { importSchema } from 'graphql-import'
+import { processImport } from '@graphql-tools/import'
 import * as fs from 'fs'
 import * as path from 'path'
+import { addFragmentToInfo } from './utils/addFragmentToInfo'
 
 export class Delegate {
   schema: GraphQLSchema
@@ -49,9 +49,12 @@ export class Delegate {
     variables?: { [key: string]: any },
   ): Promise<T> {
     this.before()
-    return graphql(this.schema, query, null, null, variables).then(
-      r => r as any,
-    )
+    const result = await graphql({
+      schema: this.schema,
+      source: query,
+      variableValues: variables,
+    })
+    return result as any
   }
 
   public async delegate(
@@ -116,7 +119,9 @@ export class Delegate {
   ): IResolvers {
     const typeMap = this.schema.getTypeMap()
 
+    let maybeFilterSchema = filterSchema
     if (filterSchema && typeof filterSchema === 'string') {
+      let schemaSDL = filterSchema
       if (filterSchema.endsWith('graphql')) {
         const schemaPath = path.resolve(filterSchema)
 
@@ -124,20 +129,21 @@ export class Delegate {
           throw new Error(`No schema found for path: ${schemaPath}`)
         }
 
-        filterSchema = importSchema(schemaPath)
+        const importedDoc = processImport(schemaPath)
+        schemaSDL = print(importedDoc)
       }
-      filterSchema = buildSchema(filterSchema)
+      maybeFilterSchema = buildSchema(schemaSDL)
     }
     const filterTypeMap =
-      filterSchema instanceof GraphQLSchema
-        ? filterSchema.getTypeMap()
+      maybeFilterSchema instanceof GraphQLSchema
+        ? maybeFilterSchema.getTypeMap()
         : typeMap
-    const filterType = typeName => typeName in filterTypeMap
+    const filterType = (typeName) => typeName in filterTypeMap
 
     const resolvers = {}
     Object.keys(typeMap)
       .filter(filterType)
-      .forEach(typeName => {
+      .forEach((typeName) => {
         const type = typeMap[typeName]
         if (
           type instanceof GraphQLUnionType ||
@@ -159,22 +165,37 @@ export class Delegate {
     infoOrQuery?: GraphQLResolveInfo | string,
     options?: Options,
   ): { info: any; result: Promise<any> } {
-    const info = buildInfo(fieldName, operation, this.schema, infoOrQuery)
+    let info = buildInfo(fieldName, operation, this.schema, infoOrQuery)
+    info = this.applyFragmentReplacements(fieldName, info)
 
     const transforms = options && options.transforms ? options.transforms : []
+    const operationNode =
+      operation === 'mutation'
+        ? OperationTypeNode.MUTATION
+        : operation === 'subscription'
+          ? OperationTypeNode.SUBSCRIPTION
+          : OperationTypeNode.QUERY
     const result = delegateToSchema({
       schema: this.schema,
-      operation,
+      operation: operationNode,
       fieldName,
       args: args || {},
       context: options && options.context ? options.context : {},
       info,
-      transforms: [
-        ...transforms,
-        new ReplaceFieldWithFragment(this.schema, this.fragmentReplacements),
-      ],
+      transforms,
     })
 
     return { info, result }
+  }
+
+  private applyFragmentReplacements(
+    fieldName: string,
+    info: GraphQLResolveInfo,
+  ): GraphQLResolveInfo {
+    return this.fragmentReplacements
+      .filter((replacement) => replacement.field === fieldName)
+      .reduce<GraphQLResolveInfo>((acc, replacement) => {
+        return addFragmentToInfo(acc, replacement.fragment)
+      }, info)
   }
 }

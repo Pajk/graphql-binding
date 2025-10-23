@@ -8,7 +8,7 @@ const typeDefs = fs.readFileSync(
   path.join(__dirname, '../../src/codegen/fixtures/schema.graphql'),
   'utf-8',
 )
-test('flow generator', t => {
+test('flow generator', (t) => {
   const schema = buildSchema(typeDefs)
   const generator = new FlowGenerator({
     schema,

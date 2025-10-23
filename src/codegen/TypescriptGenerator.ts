@@ -5,12 +5,11 @@ import {
   GraphQLInputObjectType,
   GraphQLInputField,
   GraphQLField,
-  GraphQLInputType,
-  GraphQLOutputType,
   GraphQLScalarType,
   GraphQLEnumType,
   GraphQLFieldMap,
   GraphQLObjectType,
+  GraphQLType,
   getNamedType,
   isNonNullType,
   isListType,
@@ -37,7 +36,7 @@ export class TypescriptGenerator extends Generator {
         type.name
       } = ${type
         .getTypes()
-        .map(t => t.name)
+        .map((t) => t.name)
         .join(' | ')}`
     },
 
@@ -53,7 +52,7 @@ export class TypescriptGenerator extends Generator {
       type: GraphQLObjectType | GraphQLInputObjectType | GraphQLInterfaceType,
     ): string => {
       const fieldDefinition = Object.keys(type.getFields())
-        .map(f => {
+        .map((f) => {
           const field = type.getFields()[f]
           return `  ${this.renderFieldName(field)}: ${this.renderInputFieldType(
             field.type,
@@ -61,10 +60,9 @@ export class TypescriptGenerator extends Generator {
         })
         .join('\n')
 
-      let interfaces: GraphQLInterfaceType[] = []
-      if (isObjectType(type)) {
-        interfaces = type.getInterfaces()
-      }
+      const interfaces: GraphQLInterfaceType[] = isObjectType(type)
+        ? [...type.getInterfaces()]
+        : []
 
       return this.renderInterfaceWrapper(
         type.name,
@@ -96,8 +94,9 @@ ${type.description}
 */
 `
           : ''
-      }export type ${type.name}_Input = ${this.scalarMapping[type.name] ||
-        'string'}
+      }export type ${type.name}_Input = ${
+        this.scalarMapping[type.name] || 'string'
+      }
 export type ${type.name}_Output = string`
     },
 
@@ -106,7 +105,7 @@ export type ${type.name}_Output = string`
         type.name
       } {\n${type
         .getValues()
-        .map(e => `  ${e.name} = '${e.value}',`)
+        .map((e) => `  ${e.name} = '${e.value}',`)
         .join('\n')}\n}`
     },
   }
@@ -190,14 +189,14 @@ ${this.renderTypes()}`
     const ast = this.schema
     // Create types
     return Object.keys(ast.getTypeMap())
-      .filter(typeName => !typeName.startsWith('__'))
-      .filter(typeName =>
+      .filter((typeName) => !typeName.startsWith('__'))
+      .filter((typeName) =>
         ast.getQueryType() ? typeName !== ast.getQueryType()!.name : true,
       )
-      .filter(typeName =>
+      .filter((typeName) =>
         ast.getMutationType() ? typeName !== ast.getMutationType()!.name : true,
       )
-      .filter(typeName =>
+      .filter((typeName) =>
         ast.getSubscriptionType()
           ? typeName !== ast.getSubscriptionType()!.name
           : true,
@@ -224,7 +223,7 @@ ${this.renderTypes()}`
   renderTypes() {
     const typeNames = this.getTypeNames()
     return typeNames
-      .map(typeName => {
+      .map((typeName) => {
         const type = this.schema.getTypeMap()[typeName]
         return this.graphqlRenderers[type.constructor.name]
           ? this.graphqlRenderers[type.constructor.name](type)
@@ -238,7 +237,7 @@ ${this.renderTypes()}`
     fields: GraphQLFieldMap<any, any>,
   ): string {
     const methods = Object.keys(fields)
-      .map(f => {
+      .map((f) => {
         const field = fields[f]
         const hasArgs = field.args.length > 0
 
@@ -246,7 +245,8 @@ ${this.renderTypes()}`
           field.type,
         )}>(args${hasArgs ? '' : '?'}: {${hasArgs ? ' ' : ''}${field.args
           .map(
-            f => `${this.renderFieldName(f)}: ${this.renderFieldType(f.type)}`,
+            (f) =>
+              `${this.renderFieldName(f)}: ${this.renderFieldType(f.type)}`,
           )
           .join(', ')}${
           field.args.length > 0 ? ' ' : ''
@@ -272,7 +272,7 @@ ${this.renderTypes()}`
     type: GraphQLObjectType | GraphQLInputObjectType | GraphQLInterfaceType,
   ): string {
     const fieldDefinition = Object.keys(type.getFields())
-      .map(f => {
+      .map((f) => {
         const field = type.getFields()[f]
         return `  ${this.renderFieldName(field)}: ${this.renderFieldType(
           field.type,
@@ -280,10 +280,9 @@ ${this.renderTypes()}`
       })
       .join('\n')
 
-    let interfaces: GraphQLInterfaceType[] = []
-    if (isObjectType(type)) {
-      interfaces = type.getInterfaces()
-    }
+    const interfaces: GraphQLInterfaceType[] = isObjectType(type)
+      ? [...type.getInterfaces()]
+      : []
 
     return this.renderInterfaceWrapper(
       type.name,
@@ -297,15 +296,19 @@ ${this.renderTypes()}`
     return isNonNullType(field.type) ? field.name : `${field.name}?`
   }
 
-  renderFieldType(type: GraphQLInputType | GraphQLOutputType): string {
+  renderFieldType(type: GraphQLType): string {
     /* Render list type */
     if (isListType(type)) {
-      return `Array<${this.renderFieldType(type.ofType)}> | null`
+      return `Array<${this.renderFieldType(
+        (type as any).ofType as GraphQLType,
+      )}> | null`
     }
 
     /* Render non nullable type */
     if (isNonNullType(type)) {
-      return `${this.renderFieldType(type.ofType)}`.replace(/ \| null$/, '')
+      return `${this.renderFieldType(
+        (type as any).ofType as GraphQLType,
+      )}`.replace(/ \| null$/, '')
     }
 
     /* Render nullable type */
@@ -313,16 +316,18 @@ ${this.renderTypes()}`
     return `${ofType.name === 'ID' ? 'ID_Output' : ofType.name} | null`
   }
 
-  renderInputFieldType(type: GraphQLInputType | GraphQLOutputType): string {
+  renderInputFieldType(type: GraphQLType): string {
     /* Render list type */
     if (isListType(type)) {
-      const typeName = this.renderFieldType(type.ofType)
+      const typeName = this.renderFieldType((type as any).ofType as GraphQLType)
       return `${typeName}[] | ${typeName} | null`
     }
 
     /* Render non nullable type */
     if (isNonNullType(type)) {
-      return `${this.renderFieldType(type.ofType)}`.replace(/ \| null$/, '')
+      return `${this.renderFieldType(
+        (type as any).ofType as GraphQLType,
+      )}`.replace(/ \| null$/, '')
     }
 
     /* Render nullable type */
@@ -352,7 +357,7 @@ ${fieldDefinition}
       typeDescription,
     )}export interface ${typeName}${
       interfaces.length > 0
-        ? ` extends ${interfaces.map(i => i.name).join(', ')}`
+        ? ` extends ${interfaces.map((i) => i.name).join(', ')}`
         : ''
     } {
 ${fieldDefinition}
@@ -363,7 +368,7 @@ ${fieldDefinition}
     return `${
       description
         ? `/*
-${description.split('\n').map(l => ` * ${l}\n`)}
+${description.split('\n').map((l) => ` * ${l}\n`)}
  */
 `
         : ''
@@ -373,7 +378,7 @@ ${description.split('\n').map(l => ` * ${l}\n`)}
     return `\
 import { makeBindingClass, Options } from '@pjk/graphql-binding'
 import { GraphQLResolveInfo, GraphQLSchema } from 'graphql'
-import { IResolvers } from 'graphql-tools-fork'
+import type { IResolvers } from '@graphql-tools/utils'
 import ${
       this.isDefaultExport ? '' : '* as '
     }schema from  '${this.getRelativeSchemaPath()}'`

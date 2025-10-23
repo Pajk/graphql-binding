@@ -6,7 +6,7 @@ import { assertFields } from '../info.test'
 import { omitDeep } from './removeKey'
 import { printDocumentFromInfo } from '.'
 
-test('addFragmentToInfo: add field by simple query', t => {
+test('addFragmentToInfo: add field by simple query', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -24,7 +24,7 @@ test('addFragmentToInfo: add field by simple query', t => {
   assertFields(t, selections, ['title', 'extraField'])
 })
 
-test('addFragmentToInfo: add field to array payload', t => {
+test('addFragmentToInfo: add field to array payload', (t) => {
   const schema = buildSchema(`
   type Query {
     books: [Book!]!
@@ -43,7 +43,7 @@ test('addFragmentToInfo: add field to array payload', t => {
   t.snapshot(getRelevantPartsFromInfo(patchedInfo))
 })
 
-test('addFragmentToInfo: add field by fragment', t => {
+test('addFragmentToInfo: add field by fragment', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -64,7 +64,7 @@ test('addFragmentToInfo: add field by fragment', t => {
   assertFields(t, selections, ['title', 'extraField'])
 })
 
-test("addFragmentToInfo: dont add field by fragment when type doesn't match", t => {
+test("addFragmentToInfo: dont add field by fragment when type doesn't match", (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book

@@ -1,9 +1,11 @@
 const { buildSchema } = require('graphql')
 const fs = require('fs')
-const {addMockFunctionsToSchema} = require('graphql-tools')
+const { addMocksToSchema } = require('@graphql-tools/mock')
 
-const schema = buildSchema(fs.readFileSync(__dirname + '/schema.graphql', 'utf-8'))
+const schema = buildSchema(
+  fs.readFileSync(__dirname + '/schema.graphql', 'utf-8'),
+)
 
-addMockFunctionsToSchema({schema})
+addMocksToSchema({ schema })
 
 module.exports = schema
