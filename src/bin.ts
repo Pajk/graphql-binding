@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs'
-import * as yargs from 'yargs'
+import yargs from 'yargs'
 import mkdirp from 'mkdirp'
 import * as path from 'path'
 import { Generator } from './codegen/Generator'

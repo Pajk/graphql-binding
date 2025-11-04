@@ -111,7 +111,7 @@ export class Delegate {
       [$$asyncIterator]() {
         return this
       },
-    }
+    } as unknown as AsyncIterator<any>
   }
 
   public getAbstractResolvers(
