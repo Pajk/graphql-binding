@@ -348,7 +348,7 @@ test('makeSubInfo: returns null when path has not been selected', (t) => {
 
   const subInfo = makeSubInfo(info, 'page')!
 
-  t.is(subInfo, null)
+  t.deepEqual(subInfo, null)
 })
 
 export function assertFields(
