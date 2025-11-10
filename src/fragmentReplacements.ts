@@ -1,5 +1,5 @@
 import { FragmentReplacement } from './types'
-import { IResolvers } from 'graphql-tools-fork'
+import type { IResolvers } from '@graphql-tools/utils'
 
 export function extractFragmentReplacements(
   resolvers: IResolvers,

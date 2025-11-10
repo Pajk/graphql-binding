@@ -11,6 +11,9 @@ import {
   GraphQLNonNull,
   print,
   DocumentNode,
+  Kind,
+  OperationDefinitionNode,
+  OperationTypeNode,
 } from 'graphql'
 
 import { Operation } from '../types'
@@ -103,19 +106,23 @@ export function forwardTo(bindingName: string) {
 
 export function printDocumentFromInfo(info: GraphQLResolveInfo) {
   const fragments = Object.keys(info.fragments).map(
-    fragment => info.fragments[fragment],
+    (fragment) => info.fragments[fragment],
   )
-  const doc: DocumentNode = {
-    kind: 'Document',
-    definitions: [
-      {
-        kind: 'OperationDefinition',
-        operation: 'query',
-        selectionSet: info.fieldNodes[0].selectionSet!,
-      },
-      ...fragments,
-    ],
+  const selectionSet = info.fieldNodes[0].selectionSet
+  if (!selectionSet) {
+    throw new Error('Cannot print document without a selection set')
   }
 
-  return print(doc as any)
+  const operationDefinition: OperationDefinitionNode = {
+    kind: Kind.OPERATION_DEFINITION,
+    operation: OperationTypeNode.QUERY,
+    selectionSet,
+  }
+
+  const doc: DocumentNode = {
+    kind: Kind.DOCUMENT,
+    definitions: [operationDefinition, ...fragments],
+  }
+
+  return print(doc)
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs'
-import * as yargs from 'yargs'
+import yargs from 'yargs'
 import mkdirp from 'mkdirp'
 import * as path from 'path'
 import { Generator } from './codegen/Generator'
@@ -37,7 +37,7 @@ const argv = yargs
   })
   .demandOption(['i', 'l', 'b']).argv
 
-run(argv).catch(e => console.error(e))
+run(argv).catch((e) => console.error(e))
 
 async function run(argv) {
   const { input, language, outputBinding, outputTypedefs } = argv

@@ -3,7 +3,7 @@ import {
   GraphQLScalarType,
   parse,
   FragmentDefinitionNode,
-  OperationDefinitionNode,
+  Kind,
 } from 'graphql'
 import { getDeepType } from '../info'
 import * as immutable from 'object-path-immutable'
@@ -23,9 +23,12 @@ export function addFragmentToInfo(
 
   const deepReturnType = getDeepType(returnType)
 
+  const [definition] = ast.definitions
+
   if (
-    ast.definitions[0].kind === 'FragmentDefinition' &&
-    (ast.definitions[0] as FragmentDefinitionNode).typeCondition.name.value !==
+    definition &&
+    definition.kind === Kind.FRAGMENT_DEFINITION &&
+    (definition as FragmentDefinitionNode).typeCondition.name.value !==
       deepReturnType.toString()
   ) {
     throw new Error(
@@ -35,12 +38,19 @@ export function addFragmentToInfo(
     )
   }
 
+  const hasSelectionSet =
+    definition &&
+    'selectionSet' in definition &&
+    definition.selectionSet &&
+    Array.isArray(definition.selectionSet.selections)
+
+  const selectionsToAdd = hasSelectionSet
+    ? definition.selectionSet!.selections
+    : []
+
   return (immutable as any).update(
     info,
     ['fieldNodes', 0, 'selectionSet', 'selections'],
-    selections =>
-      selections.concat(
-        (ast.definitions[0] as OperationDefinitionNode).selectionSet.selections,
-      ),
+    (selections) => selections.concat(selectionsToAdd),
   )
 }

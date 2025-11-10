@@ -1,6 +1,0 @@
-endpoint: https://eu1.prisma.sh/lol/session65/dev
-datamodel: datamodel.graphql
-hooks:
-  post-deploy:
-    - graphql get-schema
-    - graphql codegen

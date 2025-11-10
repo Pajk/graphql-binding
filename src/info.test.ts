@@ -4,6 +4,7 @@ import {
   SelectionNode,
   FieldNode,
   GraphQLResolveInfo,
+  Kind,
 } from 'graphql'
 import {
   buildInfoForAllScalars,
@@ -13,7 +14,7 @@ import {
 import { omitDeep } from './utils/removeKey'
 import { printDocumentFromInfo } from './utils'
 
-test('buildInfoForAllScalars: 1 field', t => {
+test('buildInfoForAllScalars: 1 field', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -29,7 +30,7 @@ test('buildInfoForAllScalars: 1 field', t => {
   assertFields(t, selections, ['title'])
 })
 
-test('buildInfoForAllScalars: 2 fields', t => {
+test('buildInfoForAllScalars: 2 fields', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -47,7 +48,7 @@ test('buildInfoForAllScalars: 2 fields', t => {
   t.is(info.fieldName, 'book')
 })
 
-test('buildInfoForAllScalars: excludes object type fields', t => {
+test('buildInfoForAllScalars: excludes object type fields', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -66,7 +67,7 @@ test('buildInfoForAllScalars: excludes object type fields', t => {
   t.is(info.fieldName, 'book')
 })
 
-test('buildInfoForAllScalars: support interfaces', t => {
+test('buildInfoForAllScalars: support interfaces', (t) => {
   const schema = buildSchema(`
   type Query {
     book: IBook
@@ -91,7 +92,7 @@ test('buildInfoForAllScalars: support interfaces', t => {
   t.is(info.fieldName, 'book')
 })
 
-test('buildInfoForAllScalars: enums', t => {
+test('buildInfoForAllScalars: enums', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -109,7 +110,7 @@ test('buildInfoForAllScalars: enums', t => {
   assertFields(t, selections, ['color'])
 })
 
-test('buildInfoForAllScalars: minimal static root field', t => {
+test('buildInfoForAllScalars: minimal static root field', (t) => {
   const schema = buildSchema(`
   type Query {
     count: Int
@@ -119,7 +120,7 @@ test('buildInfoForAllScalars: minimal static root field', t => {
   t.is(info.fieldNodes.length, 1)
 })
 
-test('buildInfoForAllScalars: mutation', t => {
+test('buildInfoForAllScalars: mutation', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Int # use name root field name but different type
@@ -139,7 +140,7 @@ test('buildInfoForAllScalars: mutation', t => {
   assertFields(t, selections, ['title'])
 })
 
-test('buildInfoForAllScalars: throws error when field not found', t => {
+test('buildInfoForAllScalars: throws error when field not found', (t) => {
   const schema = buildSchema(`
   type Query {
     count: Int
@@ -148,7 +149,7 @@ test('buildInfoForAllScalars: throws error when field not found', t => {
   t.throws(() => buildInfoForAllScalars('other', schema, 'query'))
 })
 
-test('buildInfoFromFragment: 1 field', t => {
+test('buildInfoFromFragment: 1 field', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -164,7 +165,7 @@ test('buildInfoFromFragment: 1 field', t => {
   assertFields(t, selections, ['title'])
 })
 
-test('buildInfoFromFragment: nested', t => {
+test('buildInfoFromFragment: nested', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -189,7 +190,7 @@ test('buildInfoFromFragment: nested', t => {
   )
 })
 
-test('buildInfoFromFragment: invalid selection', t => {
+test('buildInfoFromFragment: invalid selection', (t) => {
   const schema = buildSchema(`
   type Query {
     book: Book
@@ -207,7 +208,7 @@ test('buildInfoFromFragment: invalid selection', t => {
   }
 })
 
-test('makeSubInfo: works when path has been selected', t => {
+test('makeSubInfo: works when path has been selected', (t) => {
   const schema = buildSchema(`
     type Query {
       book: Book
@@ -237,7 +238,7 @@ test('makeSubInfo: works when path has been selected', t => {
   t.snapshot(getRelevantPartsFromInfo(subInfo))
 })
 
-test('makeSubInfo: works when path has been selected and adds fragment', t => {
+test('makeSubInfo: works when path has been selected and adds fragment', (t) => {
   const schema = buildSchema(`
     type Query {
       book: Book
@@ -270,7 +271,7 @@ test('makeSubInfo: works when path has been selected and adds fragment', t => {
   t.snapshot(printDocumentFromInfo(subInfo))
 })
 
-test('makeSubInfo: works with inline fragment', t => {
+test('makeSubInfo: works with inline fragment', (t) => {
   const schema = buildSchema(`
     type Query {
       book: Book
@@ -326,7 +327,7 @@ function getRelevantPartsFromInfo(info: GraphQLResolveInfo) {
   }
 }
 
-test('makeSubInfo: returns null when path has not been selected', t => {
+test('makeSubInfo: returns null when path has not been selected', (t) => {
   const schema = buildSchema(`
     type Query {
       book: Book
@@ -347,7 +348,7 @@ test('makeSubInfo: returns null when path has not been selected', t => {
 
   const subInfo = makeSubInfo(info, 'page')!
 
-  t.is(subInfo, null)
+  t.deepEqual(subInfo, null)
 })
 
 export function assertFields(
@@ -355,15 +356,15 @@ export function assertFields(
   selections: ReadonlyArray<SelectionNode>,
   names: string[],
 ) {
-  const fields = names.map<FieldNode>(value => ({
-    kind: 'Field',
-    name: { kind: 'Name', value },
+  const fields = names.map<FieldNode>((value) => ({
+    kind: Kind.FIELD,
+    name: { kind: Kind.NAME, value },
   }))
 
   for (const field of fields) {
     t.true(
       selections.some(
-        s => s.kind === 'Field' && s.name.value === field.name.value,
+        (s) => s.kind === Kind.FIELD && s.name.value === field.name.value,
       ),
     )
   }

@@ -1,34 +1,48 @@
-import { Interpolation } from '../types'
+import { Interpolation, InterpolationFunction } from '../types'
 
 const flatten = <T>(
-  chunks: Interpolation<any>[],
+  chunks: ReadonlyArray<Interpolation<T>>,
   executionContext: T,
-): Interpolation<T>[] =>
-  chunks.reduce((ruleSet: Interpolation<T>[], chunk?: Interpolation<T>) => {
-    /* Remove falsey values */
+): Interpolation<T>[] => {
+  const ruleSet: Interpolation<T>[] = []
+
+  for (const chunk of chunks) {
     if (
       chunk === undefined ||
       chunk === null ||
       chunk === false ||
       chunk === ''
     ) {
-      return ruleSet
+      continue
     }
-    /* Flatten ruleSet */
+
     if (Array.isArray(chunk)) {
-      return [...ruleSet, ...flatten(chunk, executionContext)]
+      const nested = flatten(
+        chunk as ReadonlyArray<Interpolation<any>>,
+        executionContext,
+      ) as Interpolation<T>[]
+      ruleSet.push(...nested)
+      continue
     }
 
-    /* Either execute or defer the function */
     if (typeof chunk === 'function') {
-      return executionContext
-        ? ruleSet.concat(
-            ...flatten([chunk(executionContext)], executionContext),
-          )
-        : ruleSet.concat(chunk)
+      if (executionContext !== undefined && executionContext !== null) {
+        const evaluated = (chunk as InterpolationFunction<T>)(executionContext)
+        const nested = flatten(
+          [evaluated] as ReadonlyArray<Interpolation<any>>,
+          executionContext,
+        ) as Interpolation<T>[]
+        ruleSet.push(...nested)
+      } else {
+        ruleSet.push(chunk as Interpolation<T>)
+      }
+      continue
     }
 
-    return ruleSet.concat(chunk.toString())
-  }, [])
+    ruleSet.push(chunk.toString() as Interpolation<T>)
+  }
+
+  return ruleSet
+}
 
 export default flatten
